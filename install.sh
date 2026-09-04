@@ -69,9 +69,19 @@ rm -rf "$APP_HOME/app.new"
 mv "$WORK/unpack/stable" "$APP_HOME/app.new"
 if [ -d "$APP_HOME/app" ]; then rm -rf "$APP_HOME/app.old"; mv "$APP_HOME/app" "$APP_HOME/app.old"; fi
 mv "$APP_HOME/app.new" "$APP_HOME/app"
-rm -rf "$APP_HOME/app.old"
 ln -sf "$APP_HOME/app/stable" "$BIN_DIR/stable"
 echo "  ✓ stable $VERSION → $APP_HOME/app (linked at $BIN_DIR/stable)"
+
+# A Palm broker Stable started runs from the OLD app's files: restart it on the new ones
+# before those files go (live Claude Code sessions are registered again on their next prompt).
+if [ -f "$APP_HOME/broker.pid" ] && kill -0 "$(cat "$APP_HOME/broker.pid" 2>/dev/null)" 2>/dev/null; then
+  if "$APP_HOME/app/stable" broker restart >/dev/null 2>&1; then
+    echo "  ✓ Stable's Palm broker restarted on the new app"
+  else
+    echo "  ⚠ Stable's Palm broker could not be restarted — run: stable broker restart"
+  fi
+fi
+rm -rf "$APP_HOME/app.old"
 
 case ":$PATH:" in
   *":$BIN_DIR:"*) ;;
