@@ -30,7 +30,12 @@ command -v curl >/dev/null 2>&1 || { echo "  ✗ curl is required." >&2; exit 1;
 command -v shasum >/dev/null 2>&1 || { echo "  ✗ shasum is required to verify the download." >&2; exit 1; }
 
 WORK="$(mktemp -d /tmp/stable-install.XXXXXX)"
-trap 'rm -rf "$WORK"' EXIT
+INSTALL_LOCK=""
+cleanup() {
+  rm -rf "$WORK"
+  if [ -n "$INSTALL_LOCK" ]; then rmdir "$INSTALL_LOCK" 2>/dev/null || true; fi
+}
+trap cleanup EXIT
 
 if [ -n "${STABLE_INSTALL_VERSION:-}" ]; then
   BASE="https://github.com/$REPO/releases/download/$STABLE_INSTALL_VERSION"
@@ -65,23 +70,59 @@ VERSION="$("$WORK/unpack/stable/stable" --version 2>/dev/null | awk '{print $2}'
 # old files open until it restarts (`stable cc` restarts one that is Stable's own).
 mkdir -p "$APP_HOME" "$BIN_DIR"
 chmod 700 "$APP_HOME"
+if ! mkdir "$APP_HOME/install.lock" 2>/dev/null; then
+  echo "  ✗ another install is active (or was interrupted); inspect $APP_HOME/install.lock before retrying." >&2
+  exit 1
+fi
+INSTALL_LOCK="$APP_HOME/install.lock"
 rm -rf "$APP_HOME/app.new"
 mv "$WORK/unpack/stable" "$APP_HOME/app.new"
-if [ -d "$APP_HOME/app" ]; then rm -rf "$APP_HOME/app.old"; mv "$APP_HOME/app" "$APP_HOME/app.old"; fi
-mv "$APP_HOME/app.new" "$APP_HOME/app"
+BACKUP=""
+if [ -d "$APP_HOME/app" ]; then
+  BACKUP="$(mktemp -d "$APP_HOME/app.previous.XXXXXX")"
+  mv "$APP_HOME/app" "$BACKUP/app"
+fi
+if ! mv "$APP_HOME/app.new" "$APP_HOME/app"; then
+  if [ -n "$BACKUP" ]; then mv "$BACKUP/app" "$APP_HOME/app"; fi
+  echo "  ✗ app swap failed; the previous installation was restored." >&2
+  exit 1
+fi
 ln -sf "$APP_HOME/app/stable" "$BIN_DIR/stable"
 echo "  ✓ stable $VERSION → $APP_HOME/app (linked at $BIN_DIR/stable)"
 
 # A Palm broker Stable started runs from the OLD app's files: restart it on the new ones
 # before those files go (live Claude Code sessions are registered again on their next prompt).
-if [ -f "$APP_HOME/broker.pid" ] && kill -0 "$(cat "$APP_HOME/broker.pid" 2>/dev/null)" 2>/dev/null; then
+KEEP_BACKUP=0
+if [ -f "$APP_HOME/broker.pid" ]; then
   if "$APP_HOME/app/stable" broker restart >/dev/null 2>&1; then
     echo "  ✓ Stable's Palm broker restarted on the new app"
   else
+    KEEP_BACKUP=1
     echo "  ⚠ Stable's Palm broker could not be restarted — run: stable broker restart"
   fi
 fi
-rm -rf "$APP_HOME/app.old"
+if [ -f "$APP_HOME/proxy/proxy.pid" ]; then
+  if "$APP_HOME/app/stable" proxy restart >/dev/null 2>&1; then
+    echo "  ✓ Stable's proxy restarted on the new app"
+  else
+    KEEP_BACKUP=1
+    echo "  ⚠ Stable's proxy could not be restarted — finish active sessions, then run: stable proxy restart"
+  fi
+fi
+if "$APP_HOME/app/stable" install --refresh-installed >"$WORK/integration-refresh.log" 2>&1; then
+  echo "  ✓ refreshed previously installed host integrations"
+else
+  KEEP_BACKUP=1
+  cat "$WORK/integration-refresh.log" >&2
+  echo "  ⚠ an existing integration could not be refreshed — resolve the error, then run: stable install --refresh-installed"
+fi
+if [ -n "$BACKUP" ]; then
+  if [ "$KEEP_BACKUP" = 0 ]; then
+    rm -rf "$BACKUP"
+  else
+    echo "  → previous app retained at $BACKUP/app until its services have stopped"
+  fi
+fi
 
 case ":$PATH:" in
   *":$BIN_DIR:"*) ;;
@@ -103,7 +144,7 @@ fi
 
 printf '\n  Next:\n'
 echo "    stable login            paste a Conifer Gateway key (https://conifer.build/console#/keys)"
-echo "    stable install          wire /model, /harness, /ask into the harnesses on this Mac"
+echo "    stable install claude-code   wire /harness, /ask, and subagents into Claude Code"
 echo "    stable doctor           one line per dependency"
 echo "    stable cc | codex | pi  launch a harness on Stable's lanes"
 echo
