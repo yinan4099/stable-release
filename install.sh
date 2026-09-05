@@ -6,7 +6,8 @@
 # Downloads the latest published stable-macos-arm64.tar.gz from the release
 # channel, verifies it against the release's own sha256 asset, unpacks it under
 # ~/.stable/app and links ~/.local/bin/stable to it. The app carries its own
-# Python interpreter, so nothing else is required. Fails CLOSED at every step:
+# Python interpreter; install each harness CLI separately (Codex can also come
+# from its desktop app). Fails CLOSED at every step:
 # nothing changes unless the download completed AND the hash matched. No sudo,
 # ever — everything lands under $HOME. View this plain file before running it.
 #
@@ -129,7 +130,15 @@ case ":$PATH:" in
   *) echo "  ⚠ $BIN_DIR is not on your PATH — add this to your shell profile:"; echo "      export PATH=\"\$HOME/.local/bin:\$PATH\"" ;;
 esac
 
-# The Conifer CLI: the Palm broker inside `stable cc` needs it for the gateway catalog.
+printf '\n  Checking your existing subscription…\n'
+if ! "$APP_HOME/app/stable" status --subscriptions; then
+  echo "  ⚠ subscription detection did not finish — retry: stable status --subscriptions"
+fi
+echo "  Run stable to check your current login again; stable codex login signs in if needed."
+
+# Report the existing login before optional gateway dependency setup, which can
+# take longer and is independent of subscription-only use.
+# The optional gateway lane uses the Conifer CLI; subscription detection does not.
 if [ -z "${STABLE_SKIP_CONIFER:-}" ] && ! command -v conifer >/dev/null 2>&1 && [ ! -x "$BIN_DIR/conifer" ]; then
   echo "  → installing the Conifer CLI (ConiferKit/CLI-release, verified by its own installer)"
   if curl --proto '=https' --tlsv1.2 -fsSL -m 60 -o "$WORK/install-cli.sh" \
@@ -140,11 +149,6 @@ if [ -z "${STABLE_SKIP_CONIFER:-}" ] && ! command -v conifer >/dev/null 2>&1 && 
   else
     echo "  ⚠ could not fetch the Conifer CLI installer — run later: curl -fsSL https://www.conifer.build/install-cli.sh | sh"
   fi
-fi
-
-printf '\n  Checking your existing subscription…\n'
-if ! "$APP_HOME/app/stable" status --subscriptions; then
-  echo "  ⚠ subscription detection did not finish — retry: stable status --subscriptions"
 fi
 
 printf '\n  Next:\n'

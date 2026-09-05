@@ -35,10 +35,15 @@ stable status --subscriptions  # repeat the installer's subscription check
 ```
 
 The installer detects an existing Codex subscription without displaying token
-values or asking for a Gateway key. `stable codex` wires Stable's marked hook
+values or asking for a Gateway key. Detection also checks the native Codex CLI
+inside Codex.app and ChatGPT.app in `~/Applications` or `/Applications` when
+it is absent from PATH. `stable codex` wires Stable's marked hook
 if needed; trust it once with `/hooks` in Codex. Covered Codex models can use
 that subscription in every supported harness. If you are signed out, run
-`codex login`. API keys do not count as subscriptions.
+`stable codex login`. Signing in after installation needs no reinstall: bare
+`stable` and commands that need model access check the current login again.
+API keys do not count as subscriptions. A desktop app must expose a native
+Codex ChatGPT login; being signed into a browser alone is insufficient.
 
 `stable login` optionally adds a Conifer Gateway key for other models
 ([get a key](https://conifer.build/console#/keys)). For Claude Code, run
