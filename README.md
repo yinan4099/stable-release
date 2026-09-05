@@ -34,7 +34,7 @@ stable codex            # reuse your existing Codex ChatGPT login
 stable status --subscriptions  # repeat the installer's subscription check
 ```
 
-The installer detects an existing Codex subscription without reading token
+The installer detects an existing Codex subscription without displaying token
 values or asking for a Gateway key. `stable codex` wires Stable's marked hook
 if needed; trust it once with `/hooks` in Codex. Covered Codex models can use
 that subscription in every supported harness. If you are signed out, run
@@ -44,6 +44,12 @@ that subscription in every supported harness. If you are signed out, run
 ([get a key](https://conifer.build/console#/keys)). For Claude Code, run
 `stable install claude-code`, then `stable cc`. `stable doctor` checks the
 installed dependencies and login readiness.
+
+Inside Codex, use `stable: /harness ENGINE` and `stable: /ask ENGINE PROMPT`;
+Codex owns the bare `/model` command. In Pi and Prime, the default scoped `/model` rows
+show `codex-subscription` or `conifer-gateway`. Stable preserves the harness
+when changing models. Each CLI may perform its own first-use tool setup;
+Prime also needs its Python kernel runtime and `uv` for native bootstrap.
 
 Update: run the same `curl … | bash` line again. Remove each integration with
 `stable uninstall HOST` (for example, `stable uninstall claude-code`), stop
