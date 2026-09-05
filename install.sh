@@ -142,8 +142,14 @@ if [ -z "${STABLE_SKIP_CONIFER:-}" ] && ! command -v conifer >/dev/null 2>&1 && 
   fi
 fi
 
+printf '\n  Checking your existing subscription…\n'
+if ! "$APP_HOME/app/stable" status --subscriptions; then
+  echo "  ⚠ subscription detection did not finish — retry: stable status --subscriptions"
+fi
+
 printf '\n  Next:\n'
-echo "    stable login            paste a Conifer Gateway key (https://conifer.build/console#/keys)"
+echo "    stable codex            launch Codex with your existing ChatGPT login"
+echo "    stable login            optional: add a Conifer Gateway key for other models (https://conifer.build/console#/keys)"
 echo "    stable install claude-code   wire /harness, /ask, and subagents into Claude Code"
 echo "    stable doctor           one line per dependency"
 echo "    stable cc | codex | pi  launch a harness on Stable's lanes"

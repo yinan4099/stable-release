@@ -30,11 +30,20 @@ enable integrations for new hosts. Restart an open host session to load them.
 Then:
 
 ```sh
-stable login            # paste a Conifer Gateway key (https://conifer.build/console#/keys)
-stable install claude-code  # wire the Claude Code integration
-stable doctor           # one line per dependency
-stable cc               # Claude Code on Stable's lanes (also: stable codex, stable pi)
+stable codex            # reuse your existing Codex ChatGPT login
+stable status --subscriptions  # repeat the installer's subscription check
 ```
+
+The installer detects an existing Codex subscription without reading token
+values or asking for a Gateway key. `stable codex` wires Stable's marked hook
+if needed; trust it once with `/hooks` in Codex. Covered Codex models can use
+that subscription in every supported harness. If you are signed out, run
+`codex login`. API keys do not count as subscriptions.
+
+`stable login` optionally adds a Conifer Gateway key for other models
+([get a key](https://conifer.build/console#/keys)). For Claude Code, run
+`stable install claude-code`, then `stable cc`. `stable doctor` checks the
+installed dependencies and login readiness.
 
 Update: run the same `curl … | bash` line again. Remove each integration with
 `stable uninstall HOST` (for example, `stable uninstall claude-code`), stop
