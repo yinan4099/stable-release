@@ -136,10 +136,10 @@ if ! "$APP_HOME/app/stable" install --record-app >"$WORK/ownership.log" 2>&1; th
 fi
 if [ -f "$APP_HOME/broker.pid" ]; then
   if "$APP_HOME/app/stable" broker restart >/dev/null 2>&1; then
-    echo "  ✓ Stable's Palm broker restarted on the new app"
+    echo "  ✓ Stable's provider service restarted on the new app"
   else
     KEEP_BACKUP=1
-    echo "  ⚠ Stable's Palm broker could not be restarted — run: stable broker restart"
+    echo "  ⚠ Stable's provider service could not be restarted — run: stable broker restart"
   fi
 fi
 if [ -f "$APP_HOME/proxy/proxy.pid" ]; then
