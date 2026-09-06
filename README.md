@@ -1,6 +1,6 @@
 # Stable — release channel
 
-Stable adds model selection, harness switching, Ask and external subagents to
+Stable adds model selection, harness switching, Ask, external subagents and independent review to
 coding CLIs. Claude Code is the reference host; execution adapters also drive
 Codex, pi, prime-agent and jcode. Model requests use covering subscriptions
 where available and the Conifer gateway otherwise. Harness switches carry
@@ -24,6 +24,10 @@ app under `~/.stable/app` and links `~/.local/bin/stable`. The app carries its
 own interpreter; each harness you use still needs its native CLI. It never
 uses `sudo`. Upgrades stage the replacement before swapping the app, and
 retain the previous files when an owned service cannot be restarted.
+Updates refuse while current Stable launches or reviews are active; finish or
+cancel that work before retrying. Older sessions that predate this guard keep
+their previous app files and continue running. Restart host sessions after an
+upgrade to load the new hooks and tools.
 Upgrades refresh already installed Stable skills and extensions; they do not
 enable integrations for new hosts. Restart an open host session to load them.
 
@@ -56,10 +60,35 @@ show `codex-subscription` or `conifer-gateway`. Stable preserves the harness
 when changing models. Each CLI may perform its own first-use tool setup;
 Prime also needs its Python kernel runtime and `uv` for native bootstrap.
 
-Update: run the same `curl … | bash` line again. Remove each integration with
-`stable uninstall HOST` (for example, `stable uninstall claude-code`), stop
-Stable's services with `stable proxy stop` and `stable broker stop`, then
-delete `~/.stable` and `~/.local/bin/stable`.
+New sessions start with review off. `/reviewer astra` selects a separate
+read-only native Codex reviewer using the machine's ChatGPT subscription;
+`/reviewer fable` selects native Claude Code using its own subscription.
+Automatic review runs once per task in Claude Code, Codex, Pi and Prime.
+`/reviewer manual` keeps on-demand access, and `/reviewer off` disables future
+reviews. Use `stable reviewer cancel JOB` for an active job. In Codex, spell
+these commands `stable: /reviewer astra` or `stable: /reviewer off`. Jcode supports
+on-demand review inside `stable jcode`. The same service is available to other
+MCP clients with `stable reviewer mcp --host H --session S --cwd C`.
+
+`stable default` optionally routes interactive native commands through Stable.
+Fresh installs leave this off. Open a new terminal after enabling it;
+`stable default off` reverses it, and `stable native HARNESS ...` runs the
+original native CLI. Utility commands and headless native protocols retain
+their original behavior.
+
+Model discovery remains dynamic. `stable model check --all` measures text,
+streaming, a read-only tool round trip and completion on available routes.
+Confirmed failures are excluded for the affected route; network, login,
+rate-limit and server problems remain retryable. Use `stable model excluded`
+to inspect, `stable model retry ID` to recheck, and `stable model include ID`
+to remove a manual exclusion. New models appear automatically.
+
+Update: run the same `curl … | bash` line again. `stable uninstall --dry-run`
+previews removal; `stable uninstall` removes Stable and its owned integrations.
+Native CLIs and logins remain, and history is retained by default. Add
+`--purge-data` during uninstall to remove recorded Stable data. Active Stable
+work must finish or be cancelled before uninstall. `stable uninstall HOST`
+removes only that host integration; it is separate from `stable default off`.
 
 ## Releases
 

@@ -76,8 +76,25 @@ if ! mkdir "$APP_HOME/install.lock" 2>/dev/null; then
   exit 1
 fi
 INSTALL_LOCK="$APP_HOME/install.lock"
+# The downloaded app holds the same lock as current Stable launches and reviews
+# for the entire replacement. Keep its original staging payload in place while
+# this single apply script runs, including nested integration refresh commands.
+export STABLE_INSTALL_APP_HOME="$APP_HOME" STABLE_INSTALL_BIN_DIR="$BIN_DIR"
+export STABLE_INSTALL_WORK="$WORK" STABLE_INSTALL_VERSION_TEXT="$VERSION"
+cat > "$WORK/apply.sh" <<'STABLE_APPLY'
+set -eu
+APP_HOME="$STABLE_INSTALL_APP_HOME"
+BIN_DIR="$STABLE_INSTALL_BIN_DIR"
+WORK="$STABLE_INSTALL_WORK"
+VERSION="$STABLE_INSTALL_VERSION_TEXT"
+if [ -e "$BIN_DIR/stable" ] || [ -L "$BIN_DIR/stable" ]; then
+  if [ ! -L "$BIN_DIR/stable" ] || [ "$(readlink "$BIN_DIR/stable")" != "$APP_HOME/app/stable" ]; then
+    echo "  ✗ $BIN_DIR/stable is not the installed Stable app link — it was preserved; move that command before retrying." >&2
+    exit 1
+  fi
+fi
 rm -rf "$APP_HOME/app.new"
-mv "$WORK/unpack/stable" "$APP_HOME/app.new"
+cp -R "$WORK/unpack/stable" "$APP_HOME/app.new"
 BACKUP=""
 if [ -d "$APP_HOME/app" ]; then
   BACKUP="$(mktemp -d "$APP_HOME/app.previous.XXXXXX")"
@@ -94,6 +111,11 @@ echo "  ✓ stable $VERSION → $APP_HOME/app (linked at $BIN_DIR/stable)"
 # A Palm broker Stable started runs from the OLD app's files: restart it on the new ones
 # before those files go (live Claude Code sessions are registered again on their next prompt).
 KEEP_BACKUP=0
+if ! "$APP_HOME/app/stable" install --record-app >"$WORK/ownership.log" 2>&1; then
+  KEEP_BACKUP=1
+  cat "$WORK/ownership.log" >&2
+  echo "  ⚠ app ownership could not be recorded — retry: stable install --record-app"
+fi
 if [ -f "$APP_HOME/broker.pid" ]; then
   if "$APP_HOME/app/stable" broker restart >/dev/null 2>&1; then
     echo "  ✓ Stable's Palm broker restarted on the new app"
@@ -117,13 +139,42 @@ else
   cat "$WORK/integration-refresh.log" >&2
   echo "  ⚠ an existing integration could not be refreshed — resolve the error, then run: stable install --refresh-installed"
 fi
+# Preserve the user's explicit default choice. Refresh changes only shims that
+# were enabled already; a fresh install keeps normal native commands unchanged.
+if "$APP_HOME/app/stable" default --refresh >"$WORK/default-refresh.log" 2>&1; then
+  cat "$WORK/default-refresh.log"
+else
+  KEEP_BACKUP=1
+  cat "$WORK/default-refresh.log" >&2
+  echo "  ⚠ default launchers could not be refreshed — resolve the error, then run: stable default on"
+fi
 if [ -n "$BACKUP" ]; then
+  # Query the renamed executable after the swap: this also catches old clients
+  # that entered immediately before replacement, even if argv[0] is just stable.
+  if ! "$WORK/unpack/stable/stable" install --old-app-idle "$BACKUP/app/stable"; then
+    KEEP_BACKUP=1
+  fi
   if [ "$KEEP_BACKUP" = 0 ]; then
     rm -rf "$BACKUP"
   else
     echo "  → previous app retained at $BACKUP/app until its services have stopped"
   fi
 fi
+STABLE_APPLY
+# Keep the staged helper's interpreter and payload until its guarded child
+# finishes. Removing WORK on an outer-shell interrupt would break that child.
+trap 'echo "  → finishing the guarded app update before cleaning staging files" >&2' INT TERM
+if "$WORK/unpack/stable/stable" install --with-update-lock /bin/sh "$WORK/apply.sh"; then
+  :
+else
+  CODE=$?
+  if [ "$CODE" = 64 ]; then
+    echo "  ✗ this selected release does not support the current guarded installer; use the latest release, or that older release's matching installer." >&2
+  fi
+  echo "  ✗ update did not finish — resolve the reported issue, then rerun the installer." >&2
+  exit "$CODE"
+fi
+trap - INT TERM
 
 case ":$PATH:" in
   *":$BIN_DIR:"*) ;;
@@ -156,5 +207,7 @@ echo "    stable codex            launch Codex with your existing ChatGPT login"
 echo "    stable login            optional: add a Conifer Gateway key for other models (https://conifer.build/console#/keys)"
 echo "    stable install claude-code   wire /harness, /ask, and subagents into Claude Code"
 echo "    stable doctor           one line per dependency"
+echo "    stable default          optional: make native terminal commands launch Stable"
+echo "    stable uninstall        remove Stable, preserving native CLIs and logins"
 echo "    stable cc | codex | pi  launch a harness on Stable's lanes"
 echo
