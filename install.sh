@@ -151,6 +151,7 @@ if [ -f "$APP_HOME/proxy/proxy.pid" ]; then
   fi
 fi
 if "$APP_HOME/app/stable" install --refresh-installed >"$WORK/integration-refresh.log" 2>&1; then
+  cat "$WORK/integration-refresh.log"
   echo "  ✓ refreshed previously installed host integrations"
 else
   KEEP_BACKUP=1
