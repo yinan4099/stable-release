@@ -38,14 +38,32 @@ cleanup() {
 }
 trap cleanup EXIT
 
-if [ -n "${STABLE_INSTALL_VERSION:-}" ]; then
-  BASE="https://github.com/$REPO/releases/download/$STABLE_INSTALL_VERSION"
-else
-  BASE="https://github.com/$REPO/releases/latest/download"
-fi
-
 printf '\n  Installing Stable…\n\n'
-echo "  → downloading the latest release"
+if [ -n "${STABLE_INSTALL_VERSION:-}" ]; then
+  RELEASE_TAG="$STABLE_INSTALL_VERSION"
+else
+  # Resolve the moving latest alias ONCE. Separate latest/download requests
+  # can reach different releases while publication or CDN caches advance.
+  echo "  → resolving the latest release"
+  if ! RELEASE_URL="$(curl --proto '=https' --proto-redir '=https' --tlsv1.2 -fsSL -m 60 \
+      -H 'Cache-Control: no-cache' -o /dev/null -w '%{url_effective}' \
+      "https://github.com/$REPO/releases/latest?stable_install=${WORK##*/}")"; then
+    echo "  ✗ the latest Stable release could not be resolved from $REPO — nothing was installed." >&2
+    exit 1
+  fi
+  TAG_PREFIX="https://github.com/$REPO/releases/tag/"
+  case "$RELEASE_URL" in
+    "$TAG_PREFIX"*) RELEASE_TAG="${RELEASE_URL#"$TAG_PREFIX"}" ;;
+    *) RELEASE_TAG="" ;;
+  esac
+  case "$RELEASE_TAG" in
+    ''|*[!a-zA-Z0-9._+%~-]*)
+      echo "  ✗ GitHub did not resolve a valid Stable release tag — nothing was installed." >&2
+      exit 1 ;;
+  esac
+fi
+BASE="https://github.com/$REPO/releases/download/$RELEASE_TAG"
+echo "  → downloading release $RELEASE_TAG"
 if ! curl --proto '=https' --tlsv1.2 -fsSL -m 600 -o "$WORK/$ASSET" "$BASE/$ASSET" \
    || ! curl --proto '=https' --tlsv1.2 -fsSL -m 60 -o "$WORK/$ASSET.sha256" "$BASE/$ASSET.sha256"; then
   echo "  ✗ no Stable release could be downloaded from $REPO — nothing was installed." >&2
