@@ -61,14 +61,29 @@ when changing models. Each CLI may perform its own first-use tool setup;
 Prime also needs its Python kernel runtime and `uv` for native bootstrap.
 
 New sessions start with review off. `/reviewer astra` selects a separate
-read-only native Codex reviewer using the machine's ChatGPT subscription;
+native Codex reviewer using the machine's ChatGPT subscription;
 `/reviewer fable` selects native Claude Code using its own subscription.
-Automatic review runs once per task in Claude Code, Codex, Pi and Prime.
+Review supplements completed implementation, validation, and author self-review.
+Automatic review runs in the background once per task in Claude Code, Codex, Pi
+and Prime. Standard reviews use high effort; `/reviewer deep` requests the model's
+supported higher effort with a 30-minute deadline. Material findings appear in a
+bounded review box; automatic clean results stay quiet. Results remain on disk
+until acknowledged, and the author can keep working while a deep review runs.
 `/reviewer manual` keeps on-demand access, and `/reviewer off` disables future
 reviews. Use `stable reviewer cancel JOB` for an active job. In Codex, spell
 these commands `stable: /reviewer astra` or `stable: /reviewer off`. Jcode supports
 on-demand review inside `stable jcode`. The same service is available to other
 MCP clients with `stable reviewer mcp --host H --session S --cwd C`.
+
+Setup prepares free reviewer tools privately under `~/.stable/reviewer`, without
+adding them to the normal harness or changing independently configured copies.
+`stable reviewer setup --status` reports prerequisites and readiness. Local tools
+require Node/npm, Python 3.10–3.13 for code graphs, and Chrome for browser checks.
+The reviewer can inspect an immutable source capture and run tests in disposable
+OS sandboxes; a missing or failing sandbox disables execution. Browser checks are
+currently verified on macOS and restricted to review-owned local fixtures.
+Graph indexes, public npm lockfile dependencies, and schemas use bounded private
+caches; fresh review verdicts are never replaced by cached approvals.
 
 `stable default` optionally routes interactive native commands through Stable.
 Fresh installs leave this off. Open a new terminal after enabling it;
