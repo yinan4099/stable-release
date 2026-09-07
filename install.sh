@@ -30,7 +30,7 @@ if [ "$ARCH" = "x86_64" ] && [ "$(sysctl -in hw.optional.arm64 2>/dev/null)" = "
 command -v curl >/dev/null 2>&1 || { echo "  ✗ curl is required." >&2; exit 1; }
 command -v shasum >/dev/null 2>&1 || { echo "  ✗ shasum is required to verify the download." >&2; exit 1; }
 
-WORK="$(mktemp -d /tmp/stable-install.XXXXXX)"
+WORK="$(mktemp -d "${TMPDIR:-/tmp}/stable-install.XXXXXX")"
 INSTALL_LOCK=""
 cleanup() {
   rm -rf "$WORK"
