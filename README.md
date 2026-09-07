@@ -67,19 +67,23 @@ show `codex-subscription` or `conifer-gateway`. Stable preserves the harness
 when changing models. Each CLI may perform its own first-use tool setup;
 Prime also needs its Python kernel runtime and `uv` for native bootstrap.
 
-New sessions start with review off. `/reviewer astra` selects a separate
+New Codex sessions select Fable; other harnesses select Astra. Explicit session
+choices, including off, survive resumption. `/reviewer astra` selects a separate
 native Codex reviewer using the machine's ChatGPT subscription;
 `/reviewer fable` selects native Claude Code using its own subscription.
 Review supplements completed implementation, validation, and author self-review.
-Automatic review runs in the background once per task in Claude Code, Codex, Pi
-and Prime. Standard reviews use high effort; `/reviewer deep` requests the model's
-supported higher effort with a 30-minute deadline. Material findings appear in a
+Automatic review runs in the background once per task in Stable launches of
+Claude Code, Codex, Pi, Prime, and Jcode. Standard reviews request xhigh effort with a 30-minute deadline;
+`/reviewer deep` requests max effort with a 60-minute deadline, capped by the
+model's supported effort levels. Material findings appear in a
 bounded review box; automatic clean results stay quiet. Results remain on disk
 until acknowledged, and the author can keep working while a deep review runs.
 `/reviewer manual` keeps on-demand access, and `/reviewer off` disables future
 reviews. Use `stable reviewer cancel JOB` for an active job. In Codex, spell
-these commands `$reviewer astra` or `$reviewer off` (or the explicit `stable:` form). Jcode supports
-on-demand review inside `stable jcode`. The same service is available to other
+these commands `$reviewer astra` or `$reviewer off` (or the explicit `stable:` form).
+Jcode starts background reviews through native lifecycle observers and retrieves
+results through its native MCP; its hooks cannot push a completed box into an
+idle UI. The same service is available to other
 MCP clients with `stable reviewer mcp --host H --session S --cwd C`.
 
 Setup prepares free reviewer tools privately under `~/.stable/reviewer`, without
