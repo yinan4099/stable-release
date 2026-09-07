@@ -98,7 +98,15 @@ rate-limit and server problems remain retryable. Use `stable model excluded`
 to inspect, `stable model retry ID` to recheck, and `stable model include ID`
 to remove a manual exclusion. New models appear automatically.
 
-Update: run the same `curl … | bash` line again. `stable uninstall --dry-run`
+Installed releases check for updates in the background on public launches and
+every 12 hours while Stable stays active. Updates use the same verified installer
+and wait for active Stable sessions and reviews to finish. `stable update` checks
+now and installs when idle; `stable update check` only checks, and
+`stable update status` shows local progress. Set `STABLE_AUTO_UPDATE=0` or
+`"auto_update": false` in `~/.stable/config.json` to disable automatic updates.
+Source checkouts and developer builds do not update automatically.
+
+Manual update: run the same `curl … | bash` line again. `stable uninstall --dry-run`
 previews removal; `stable uninstall` removes Stable and its owned integrations.
 Native CLIs and logins remain, and history is retained by default. Add
 `--purge-data` during uninstall to remove recorded Stable data. Active Stable
