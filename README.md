@@ -106,6 +106,22 @@ now and installs when idle; `stable update check` only checks, and
 `"auto_update": false` in `~/.stable/config.json` to disable automatic updates.
 Source checkouts and developer builds do not update automatically.
 
+Anonymous installation and usage reporting is on by default. Stable reports a
+random installation ID, version/platform, harness/model, payment lane, and
+available token counts and cost estimates. It never reports prompts, responses,
+file paths, credentials or account emails. Updates preserve the installation ID.
+`stable analytics status` shows local reporting state; `stable analytics off`
+disables reporting and clears pending uploads. `stable analytics on` enables it
+again. `STABLE_ANONYMOUS_USAGE=0` also disables reporting for that invocation.
+Uploads are bounded and run in the background; failures do not block inference.
+
+Stable's private dataroom section keeps these counters separate from Conifer
+billing and other product analytics. Active installations approximate users;
+they cannot identify a person across devices. Subscription tokens and their
+estimated API-equivalent value are separate from API-key usage and spend.
+Missing usage or price data stays unknown, and subscription estimates are never
+treated as an actual subscription bill.
+
 Manual update: run the same `curl … | bash` line again. `stable uninstall --dry-run`
 previews removal; `stable uninstall` removes Stable and its owned integrations.
 Native CLIs and logins remain, and history is retained by default. Add

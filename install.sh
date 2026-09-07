@@ -39,6 +39,8 @@ cleanup() {
 trap cleanup EXIT
 
 printf '\n  Installing Stable…\n\n'
+echo "  Anonymous install and usage counts are on by default. Disable with: stable analytics off"
+echo "  No prompts, file paths, credentials or account emails are reported."
 if [ -n "${STABLE_INSTALL_VERSION:-}" ]; then
   RELEASE_TAG="$STABLE_INSTALL_VERSION"
 else
@@ -194,6 +196,10 @@ else
   exit "$CODE"
 fi
 trap - INT TERM
+
+# The installed app owns the reporting preference and payload. Wake its finite
+# sender only after the replacement lease is released; never wait for upload.
+"$APP_HOME/app/stable" analytics --flush >/dev/null 2>&1 || true
 
 case ":$PATH:" in
   *":$BIN_DIR:"*) ;;
