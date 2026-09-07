@@ -235,7 +235,7 @@ fi
 printf '\n  Next:\n'
 echo "    stable codex            launch Codex with your existing ChatGPT login"
 echo "    stable login            optional: add a Conifer Gateway key for other models (https://conifer.build/console#/keys)"
-echo "    stable install claude-code   wire /harness, /ask, and subagents into Claude Code"
+echo "    stable install claude-code   enable /model, /harness, and /reviewer in stable cc"
 echo "    stable doctor           one line per dependency"
 echo "    stable default          optional: make native terminal commands launch Stable"
 echo "    stable reviewer setup --status   inspect private reviewer tools"

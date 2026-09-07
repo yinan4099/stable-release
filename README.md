@@ -1,13 +1,17 @@
 # Stable — release channel
 
-Stable adds model selection, harness switching, Ask, external subagents and independent review to
+Stable adds model selection, harness switching, and independent review to
 coding CLIs. Claude Code is the reference host; execution adapters also drive
 Codex, pi, prime-agent and jcode. Model requests use covering subscriptions
 where available and the Conifer gateway otherwise. Harness switches carry
-the visible conversation across.
+the visible conversation across. The selected native harness executes its tools
+and agents, while the outer host renders the output. Tool cards and interactive
+screens differ by host; Codex's prompt hook delivers switched-harness output only
+after completion. Launch `stable prime`, `stable pi`, `stable cc`, or `stable codex`
+for that harness's own full terminal interface.
 
 Hermes and OpenCode are documented adapters and refuse execution until their
-integration is verified. jcode supports streaming Ask and engine execution;
+integration is verified. jcode supports reviewer skills and streaming engine execution;
 it has no host prompt hook for persistent harness switching.
 
 This repository holds **only the compiled app and its installer**. The source
@@ -54,7 +58,10 @@ Codex ChatGPT login; being signed into a browser alone is insufficient.
 `stable install claude-code`, then `stable cc`. `stable doctor` checks the
 installed dependencies and login readiness.
 
-Inside Codex, use `stable: /harness ENGINE` and `stable: /ask ENGINE PROMPT`;
+Stable adds only `/model`, `/harness`, and `/reviewer`; native commands such as
+`/context` remain available. Codex 0.153.4 uses native skill syntax `$harness ENGINE` and `$reviewer astra|fable|off`, because its TUI rejects custom slash names
+before hooks run. Existing user skills keep their names; `stable: /harness ...`
+and `stable: /reviewer ...` remain available on a name collision.
 Codex owns the bare `/model` command. In Pi and Prime, the default scoped `/model` rows
 show `codex-subscription` or `conifer-gateway`. Stable preserves the harness
 when changing models. Each CLI may perform its own first-use tool setup;
@@ -71,7 +78,7 @@ bounded review box; automatic clean results stay quiet. Results remain on disk
 until acknowledged, and the author can keep working while a deep review runs.
 `/reviewer manual` keeps on-demand access, and `/reviewer off` disables future
 reviews. Use `stable reviewer cancel JOB` for an active job. In Codex, spell
-these commands `stable: /reviewer astra` or `stable: /reviewer off`. Jcode supports
+these commands `$reviewer astra` or `$reviewer off` (or the explicit `stable:` form). Jcode supports
 on-demand review inside `stable jcode`. The same service is available to other
 MCP clients with `stable reviewer mcp --host H --session S --cwd C`.
 
@@ -79,9 +86,11 @@ Setup prepares free reviewer tools privately under `~/.stable/reviewer`, without
 adding them to the normal harness or changing independently configured copies.
 `stable reviewer setup --status` reports prerequisites and readiness. Local tools
 require Node/npm, Python 3.10–3.13 for code graphs, and Chrome for browser checks.
-The reviewer can inspect an immutable source capture and run tests in disposable
-OS sandboxes; a missing or failing sandbox disables execution. Browser checks are
-currently verified on macOS and restricted to review-owned local fixtures.
+The reviewer runs in the actual workspace with its native file, shell, network,
+and configured tools. Private Graphify code indexing and optional disposable
+checks use separate verified sandboxes; missing optional capabilities do not
+disable the reviewer's native tools. Native browser reviews can inspect existing
+apps and public sites with private browser state.
 Graph indexes, public npm lockfile dependencies, and schemas use bounded private
 caches; fresh review verdicts are never replaced by cached approvals.
 
@@ -98,7 +107,8 @@ rate-limit and server problems remain retryable. Use `stable model excluded`
 to inspect, `stable model retry ID` to recheck, and `stable model include ID`
 to remove a manual exclusion. New models appear automatically.
 
-Installed releases check for updates in the background on public launches and
+Every normal launch of an installed release requests a background update check;
+concurrent launches coalesce without waiting for the network. Long sessions check
 every 12 hours while Stable stays active. Updates use the same verified installer
 and wait for active Stable sessions and reviews to finish. `stable update` checks
 now and installs when idle; `stable update check` only checks, and
