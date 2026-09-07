@@ -71,6 +71,10 @@ New Codex sessions select Fable; other harnesses select Astra. Explicit session
 choices, including off, survive resumption. `/reviewer astra` selects a separate
 native Codex reviewer using the machine's ChatGPT subscription;
 `/reviewer fable` selects native Claude Code using its own subscription.
+If that subscription or native harness is unavailable, the job tries the other
+native subscription once within its original deadline. Results identify the
+actual reviewer; saved preferences remain unchanged. There is no paid API or
+gateway reviewer fallback.
 Review supplements completed implementation, validation, and author self-review.
 Automatic review runs in the background once per task in Stable launches of
 Claude Code, Codex, Pi, Prime, and Jcode. Standard reviews request xhigh effort with a 30-minute deadline;
@@ -81,6 +85,8 @@ until acknowledged, and the author can keep working while a deep review runs.
 `/reviewer manual` keeps on-demand access, and `/reviewer off` disables future
 reviews. Use `stable reviewer cancel JOB` for an active job. In Codex, spell
 these commands `$reviewer astra` or `$reviewer off` (or the explicit `stable:` form).
+Jcode uses `/Reviewer` with a capital R to avoid its native `/review` collision.
+This native skill uses an author model turn; terminal reviewer controls are local.
 Jcode starts background reviews through native lifecycle observers and retrieves
 results through its native MCP; its hooks cannot push a completed box into an
 idle UI. The same service is available to other
