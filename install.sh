@@ -86,6 +86,16 @@ tar -xzf "$WORK/$ASSET" -C "$WORK/unpack"
 [ -x "$WORK/unpack/stable/stable" ] || { echo "  ✗ the archive has no stable/stable app inside — refusing it." >&2; exit 1; }
 VERSION="$("$WORK/unpack/stable/stable" --version 2>/dev/null | awk '{print $2}')"
 [ -n "$VERSION" ] || { echo "  ✗ the downloaded app does not run on this Mac — nothing was installed." >&2; exit 1; }
+if [ "${STABLE_UPDATE_STOP_ACTIVE:-0}" = 1 ] && [ "$VERSION" != "${RELEASE_TAG#v}" ]; then
+  echo "  ✗ the staged app version does not match the requested release — active work was preserved." >&2
+  exit 1
+fi
+if [ -e "$BIN_DIR/stable" ] || [ -L "$BIN_DIR/stable" ]; then
+  if [ ! -L "$BIN_DIR/stable" ] || [ "$(readlink "$BIN_DIR/stable")" != "$APP_HOME/app/stable" ]; then
+    echo "  ✗ $BIN_DIR/stable is not the installed Stable app link — it was preserved; move that command before retrying." >&2
+    exit 1
+  fi
+fi
 
 # Swap the app in atomically: unpack beside it, then rename. A running broker keeps its
 # old files open until it restarts (`stable cc` restarts one that is Stable's own).
