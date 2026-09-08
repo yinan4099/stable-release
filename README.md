@@ -45,8 +45,8 @@ stable status --subscriptions  # repeat the installer's subscription check
 The installer detects an existing Codex subscription without displaying token
 values or asking for a Gateway key. Detection also checks the native Codex CLI
 inside Codex.app and ChatGPT.app in `~/Applications` or `/Applications` when
-it is absent from PATH. `stable codex` wires Stable's marked hook
-if needed; trust it once with `/hooks` in Codex. Covered Codex models can use
+it is absent from PATH. `stable codex` loads Stable's private plugin for that
+launch; Codex may ask you to review and trust its three hooks once. Covered Codex models can use
 that subscription in every supported harness. If you are signed out, run
 `stable codex login`. Signing in after installation needs no reinstall: bare
 `stable` and commands that need model access check the current login again.
@@ -59,9 +59,15 @@ Codex ChatGPT login; being signed into a browser alone is insufficient.
 installed dependencies and login readiness.
 
 Stable adds only `/model`, `/harness`, and `/reviewer`; native commands such as
-`/context` remain available. Codex 0.153.4 uses native skill syntax `$harness ENGINE` and `$reviewer astra|fable|off`, because its TUI rejects custom slash names
-before hooks run. Existing user skills keep their names; `stable: /harness ...`
+`/context` remain available. Codex's native skill picker shows `$stable:harness`
+and `$stable:reviewer`; `$harness ENGINE` and `$reviewer astra|fable|off` remain
+short aliases when no user skill owns the name. Its TUI rejects custom slash
+names before hooks run. Existing user skills keep their names; `stable: /harness ...`
 and `stable: /reviewer ...` remain available on a name collision.
+
+Stable controls load only when launched with `stable`. Plain `claude` and
+`codex` do not discover them. Updates remove old, unmodified Stable commands
+from global skill folders while preserving edited files and unrelated skills.
 Codex owns the bare `/model` command. In Pi and Prime, the default scoped `/model` rows
 show `codex-subscription` or `conifer-gateway`. Stable preserves the harness
 when changing models. Each CLI may perform its own first-use tool setup;
