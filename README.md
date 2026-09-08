@@ -1,18 +1,28 @@
 # Stable — release channel
 
-Stable adds model selection, harness switching, and independent review to
-coding CLIs. Claude Code is the reference host; execution adapters also drive
-Codex, pi, prime-agent and jcode. Model requests use covering subscriptions
-where available and the Conifer gateway otherwise. Harness switches carry
-the visible conversation across. The selected native harness executes its tools
-and agents, while the outer host renders the output. Tool cards and interactive
-screens differ by host; Codex's prompt hook delivers switched-harness output only
-after completion. Launch `stable prime`, `stable pi`, `stable cc`, or `stable codex`
-for that harness's own full terminal interface.
+Stable adds model selection, native harness switching, and independent review
+to Claude Code, Codex, Pi, Prime and Jcode. Model requests use covering
+subscriptions where available and the Conifer gateway otherwise. Launch
+`stable cc`, `stable codex`, `stable pi`, `stable prime`, or `stable jcode` for
+that harness's full native terminal interface.
+
+`/harness NAME` closes the current Stable-owned native CLI and opens the selected
+CLI in the same terminal and working directory. The active CLI owns its display,
+streaming, tools, agents, permissions and interrupts. Stable does not render
+another harness's output inside the previous host.
+
+Each switch creates a fresh native conversation with bounded prior context.
+Claude Code and Codex attach it to the first ordinary prompt; Pi/Prime load a
+hidden native message, and Jcode imports a private native session. Switching
+does not submit a preparatory model turn or replay old tools. Original native
+transcripts remain available through each CLI's explicit resume controls.
+Select a harness by name to switch back; `/harness off` and `/harness new` are
+retired.
 
 Hermes and OpenCode are documented adapters and refuse execution until their
-integration is verified. jcode supports reviewer skills and streaming engine execution;
-it has no host prompt hook for persistent harness switching.
+integration is verified. Jcode switches through the launch-scoped
+`harness_control` MCP tool. Its native custom slash-command discovery has no
+private launch scope, so Stable does not install a global `/harness` skill.
 
 This repository holds **only the compiled app and its installer**. The source
 is private.
@@ -83,9 +93,11 @@ actual reviewer; saved preferences remain unchanged. There is no paid API or
 gateway reviewer fallback.
 Review supplements completed implementation, validation, and author self-review.
 Automatic review runs in the background once per task in Stable launches of
-Claude Code, Codex, Pi, Prime, and Jcode. Standard reviews request xhigh effort with a 30-minute deadline;
-`/reviewer deep` requests max effort with a 60-minute deadline, capped by the
-model's supported effort levels. Material findings appear in a
+Claude Code, Codex, Pi, Prime, and Jcode. Standard review is a focused extra
+check using high effort with a five-minute execution ceiling. `/reviewer deep`
+requests max effort with a 60-minute ceiling, capped by the model's supported
+effort levels. These are safety ceilings, not target durations: the reviewer
+finishes when the useful checks are complete. Material findings appear in a
 bounded review box; automatic clean results stay quiet. Results remain on disk
 until acknowledged, and the author can keep working while a deep review runs.
 `/reviewer manual` keeps on-demand access, and `/reviewer off` disables future
@@ -98,15 +110,28 @@ results through its native MCP; its hooks cannot push a completed box into an
 idle UI. The same service is available to other
 MCP clients with `stable reviewer mcp --host H --session S --cwd C`.
 
-Setup prepares free reviewer tools privately under `~/.stable/reviewer`, without
-adding them to the normal harness or changing independently configured copies.
-`stable reviewer setup --status` reports prerequisites and readiness. Local tools
-require Node/npm, Python 3.10–3.13 for code graphs, and Chrome for browser checks.
+Fresh setup enables only Graphify for private code indexing under
+`~/.stable/reviewer`. Browser and hosted research tools require explicit
+enablement; existing installations retain their saved choices. The default
+`auto` profile exposes only the selected graph. Additional profiles select from
+the optional tools you enabled. None are added to the normal author harness or
+replace independently configured copies.
+
+`stable reviewer setup --status` reports prerequisites and readiness. Graph
+packages require Node/npm and Python 3.10–3.13; Chrome is needed only for optional
+browser checks. Use `stable reviewer capability status` to inspect choices,
+`stable reviewer capability on NAME` to enable an optional tool, and
+`stable reviewer setup` to prepare enabled dependencies. No paid MCP fallback
+is configured. Public hosted tools have their operators' availability and free
+usage limits.
 The reviewer runs in the actual workspace with its native file, shell, network,
 and configured tools. Private Graphify code indexing and optional disposable
 checks use separate verified sandboxes; missing optional capabilities do not
-disable the reviewer's native tools. Native browser reviews can inspect existing
-apps and public sites with private browser state.
+disable the reviewer's native tools. Explicit browser profiles can inspect
+existing apps and public sites with private browser state. Standard reviews
+reuse relevant cached graph queries and focused native tools; they do not build
+a fresh index or repeat an entire audit without a specific need. Deep mode can
+perform broader indexing, investigation and tests.
 Graph indexes, public npm lockfile dependencies, and schemas use bounded private
 caches; fresh review verdicts are never replaced by cached approvals.
 
