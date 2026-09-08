@@ -83,8 +83,8 @@ show `codex-subscription` or `conifer-gateway`. Stable preserves the harness
 when changing models. Each CLI may perform its own first-use tool setup;
 Prime also needs its Python kernel runtime and `uv` for native bootstrap.
 
-New Codex sessions select Fable; other harnesses select Astra. Explicit session
-choices, including off, survive resumption. `/reviewer astra` selects a separate
+The reviewer is off by default in every harness. Explicit session
+choices, including off, survive resumption and harness switching. `/reviewer astra` enables a separate
 native Codex reviewer using the machine's ChatGPT subscription;
 `/reviewer fable` selects native Claude Code using its own subscription.
 If that subscription or native harness is unavailable, the job tries the other
@@ -92,7 +92,7 @@ native subscription once within its original deadline. Results identify the
 actual reviewer; saved preferences remain unchanged. There is no paid API or
 gateway reviewer fallback.
 Review supplements completed implementation, validation, and author self-review.
-Automatic review runs in the background once per task in Stable launches of
+Once enabled, automatic review runs in the background once per task in Stable launches of
 Claude Code, Codex, Pi, Prime, and Jcode. Standard review is a focused extra
 check using high effort with a five-minute execution ceiling. `/reviewer deep`
 requests max effort with a 60-minute ceiling, capped by the model's supported
