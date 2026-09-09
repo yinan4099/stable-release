@@ -31,6 +31,9 @@ Hermes and OpenCode are documented adapters and refuse execution until their
 integration is verified. Jcode switches through the launch-scoped
 `harness_control` MCP tool. Its native custom slash-command discovery has no
 private launch scope, so Stable does not install a global `/harness` skill.
+In Jcode, say "Switch this terminal to Claude Code" (or another harness).
+Its native parser does not accept `/harness`; the startup hint and chooser show
+the supported MCP path. Imported sessions remain interactive.
 
 This repository holds **only the compiled app and its installer**. The source
 is private.
@@ -105,6 +108,11 @@ explicit commands still work if MCP is disconnected. Older versions retain local
 text controls. Codex's skill controls require an author tool-call turn, while
 its built-in `/model` picker opens immediately.
 
+When Claude uses a Codex-subscription model, Stable preserves native hook
+context as supported developer input. This keeps transferred conversation in
+the actual model request across first prompts, later prompts and resume;
+clearing the conversation removes it.
+
 For code changes or an explicitly requested source review, the author completes
 implementation, validation and self-review, then calls
 `review_changes` once. Review runs at medium effort with a two-minute ceiling and
@@ -118,6 +126,9 @@ reviewer, and no gateway or paid API route is substituted.
 Ordinary questions, arithmetic, conversation and settings changes need no review.
 An explicit empty file list returns “Not needed” locally without starting a
 reviewer, searching the workspace or building a graph.
+Selecting a reviewer does not itself start one. Reviewer status distinguishes
+the current task's review from older saved results and reports when no review
+is recorded for the current task.
 
 Graphify is the only extra MCP. It uses a private pinned
 `graphifyy[mcp,sql]==0.9.55` runtime with Python 3.10–3.13. Run
