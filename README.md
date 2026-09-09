@@ -88,7 +88,14 @@ Codex reviewer; `/reviewer fable` selects Claude Code. Explicit choices survive
 resume and harness switching. In Codex, use `$stable:reviewer` or an unclaimed
 `$reviewer` alias; Jcode uses `/Reviewer` with a capital R.
 
-After implementation, validation and self-review, the author calls
+With verified Claude Code 2.1.263 or newer, bare `/reviewer` and `/harness` open
+native selection dialogs before any model call. Cancellation preserves settings;
+explicit commands still work if MCP is disconnected. Older versions retain local
+text controls. Codex's skill controls require an author tool-call turn, while
+its built-in `/model` picker opens immediately.
+
+For code changes or an explicitly requested source review, the author completes
+implementation, validation and self-review, then calls
 `review_changes` once. Review runs at medium effort with a two-minute ceiling and
 returns a concise report in that same call. The author checks applicability,
 fixes valid issues, and validates before its final response. No background review,
@@ -96,6 +103,10 @@ wait/ack loop, delayed continuation, deep mode or capability profiles are used.
 The caller owns cancellation. A missing native subscription may fall back to the
 other native reviewer once within the same deadline; results name the actual
 reviewer, and no gateway or paid API route is substituted.
+
+Ordinary questions, arithmetic, conversation and settings changes need no review.
+An explicit empty file list returns “Not needed” locally without starting a
+reviewer, searching the workspace or building a graph.
 
 Graphify is the only extra MCP. It uses a private pinned
 `graphifyy[mcp,sql]==0.9.55` runtime with Python 3.10–3.13. Run
