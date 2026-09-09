@@ -19,6 +19,14 @@ transcripts remain available through each CLI's explicit resume controls.
 Select a harness by name to switch back; `/harness off` and `/harness new` are
 retired.
 
+Switches use the same Stable setup as direct launches, preserving the provider
+and model together. Prime's built-in model names cannot take over a Stable
+subscription or gateway selection. Fresh Claude sessions can switch before
+their transcript is created. Delivered Claude/Codex context is retained for
+later resumes and onward switches; a native clear discards it. If an older
+release did not save that imported context, Stable keeps the source session
+open and explains how to recover instead of silently losing it.
+
 Hermes and OpenCode are documented adapters and refuse execution until their
 integration is verified. Jcode switches through the launch-scoped
 `harness_control` MCP tool. Its native custom slash-command discovery has no
@@ -56,8 +64,11 @@ The installer detects an existing Codex subscription without displaying token
 values or asking for a Gateway key. Detection also checks the native Codex CLI
 inside Codex.app and ChatGPT.app in `~/Applications` or `/Applications` when
 it is absent from PATH. `stable codex` loads Stable's private plugin for that
-launch; Codex may ask you to review and trust its three hooks once. Covered Codex models can use
-that subscription in every supported harness. If you are signed out, run
+launch. Stable obtains Codex's native trust hashes for its exact verified hooks
+and applies them only to that launch, avoiding repeated prompts after switching.
+Foreign hooks keep their normal trust requirements, explicitly disabled hooks
+remain disabled, and native configuration is unchanged. Covered Codex models can
+use that subscription in every supported harness. If you are signed out, run
 `stable codex login`. Signing in after installation needs no reinstall: bare
 `stable` and commands that need model access check the current login again.
 API keys do not count as subscriptions. A desktop app must expose a native
