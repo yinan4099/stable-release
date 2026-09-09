@@ -4,8 +4,8 @@
 #   curl -fsSL https://raw.githubusercontent.com/yinan4099/stable-release/main/install.sh | bash
 #
 # Downloads the latest published stable-macos-arm64.tar.gz from the release
-# channel, verifies it against the release's own sha256 asset, unpacks it under
-# ~/.stable/app and links ~/.local/bin/stable to it. The app carries its own
+# channel, verifies it against the release's own sha256 asset, unpacks it into an immutable release directory under
+# ~/.stable/releases and links ~/.local/bin/stable to it. The app carries its own
 # Python interpreter; install each harness CLI separately (Codex can also come
 # from its desktop app). Fails CLOSED at every step:
 # nothing changes unless the download completed AND the hash matched. No sudo,
@@ -86,19 +86,12 @@ tar -xzf "$WORK/$ASSET" -C "$WORK/unpack"
 [ -x "$WORK/unpack/stable/stable" ] || { echo "  ✗ the archive has no stable/stable app inside — refusing it." >&2; exit 1; }
 VERSION="$("$WORK/unpack/stable/stable" --version 2>/dev/null | awk '{print $2}')"
 [ -n "$VERSION" ] || { echo "  ✗ the downloaded app does not run on this Mac — nothing was installed." >&2; exit 1; }
-if [ "${STABLE_UPDATE_STOP_ACTIVE:-0}" = 1 ] && [ "$VERSION" != "${RELEASE_TAG#v}" ]; then
+if [ -n "${STABLE_UPDATE_EXPECTED_ID:-}" ] && [ "$VERSION" != "${RELEASE_TAG#v}" ]; then
   echo "  ✗ the staged app version does not match the requested release — active work was preserved." >&2
   exit 1
 fi
-if [ -e "$BIN_DIR/stable" ] || [ -L "$BIN_DIR/stable" ]; then
-  if [ ! -L "$BIN_DIR/stable" ] || [ "$(readlink "$BIN_DIR/stable")" != "$APP_HOME/app/stable" ]; then
-    echo "  ✗ $BIN_DIR/stable is not the installed Stable app link — it was preserved; move that command before retrying." >&2
-    exit 1
-  fi
-fi
-
-# Swap the app in atomically: unpack beside it, then rename. A running broker keeps its
-# old files open until it restarts (`stable cc` restarts one that is Stable's own).
+# The staged app validates launcher ownership inside the publication gate.
+# Old runtime paths never move: late imports, cards and hook commands stay valid.
 mkdir -p "$APP_HOME" "$BIN_DIR"
 chmod 700 "$APP_HOME"
 if ! mkdir "$APP_HOME/install.lock" 2>/dev/null; then
@@ -117,85 +110,33 @@ APP_HOME="$STABLE_INSTALL_APP_HOME"
 BIN_DIR="$STABLE_INSTALL_BIN_DIR"
 WORK="$STABLE_INSTALL_WORK"
 VERSION="$STABLE_INSTALL_VERSION_TEXT"
-if [ -e "$BIN_DIR/stable" ] || [ -L "$BIN_DIR/stable" ]; then
-  if [ ! -L "$BIN_DIR/stable" ] || [ "$(readlink "$BIN_DIR/stable")" != "$APP_HOME/app/stable" ]; then
-    echo "  ✗ $BIN_DIR/stable is not the installed Stable app link — it was preserved; move that command before retrying." >&2
-    exit 1
-  fi
-fi
-rm -rf "$APP_HOME/app.new"
-cp -R "$WORK/unpack/stable" "$APP_HOME/app.new"
-BACKUP=""
-if [ -d "$APP_HOME/app" ]; then
-  BACKUP="$(mktemp -d "$APP_HOME/app.previous.XXXXXX")"
-  mv "$APP_HOME/app" "$BACKUP/app"
-fi
-if ! mv "$APP_HOME/app.new" "$APP_HOME/app"; then
-  if [ -n "$BACKUP" ]; then mv "$BACKUP/app" "$APP_HOME/app"; fi
-  echo "  ✗ app swap failed; the previous installation was restored." >&2
-  exit 1
-fi
-ln -sf "$APP_HOME/app/stable" "$BIN_DIR/stable"
-echo "  ✓ stable $VERSION → $APP_HOME/app (linked at $BIN_DIR/stable)"
-
-# A Palm broker Stable started runs from the OLD app's files: restart it on the new ones
-# before those files go (live Claude Code sessions are registered again on their next prompt).
-KEEP_BACKUP=0
-if ! "$APP_HOME/app/stable" install --record-app >"$WORK/ownership.log" 2>&1; then
-  KEEP_BACKUP=1
-  cat "$WORK/ownership.log" >&2
-  echo "  ⚠ app ownership could not be recorded — retry: stable install --record-app"
-fi
-if [ -f "$APP_HOME/broker.pid" ]; then
-  if "$APP_HOME/app/stable" broker restart >/dev/null 2>&1; then
-    echo "  ✓ Stable's provider service restarted on the new app"
-  else
-    KEEP_BACKUP=1
-    echo "  ⚠ Stable's provider service could not be restarted — run: stable broker restart"
-  fi
-fi
-if [ -f "$APP_HOME/proxy/proxy.pid" ]; then
-  if "$APP_HOME/app/stable" proxy restart >/dev/null 2>&1; then
-    echo "  ✓ Stable's proxy restarted on the new app"
-  else
-    KEEP_BACKUP=1
-    echo "  ⚠ Stable's proxy could not be restarted — finish active sessions, then run: stable proxy restart"
-  fi
-fi
-if "$APP_HOME/app/stable" install --refresh-installed >"$WORK/integration-refresh.log" 2>&1; then
+"$WORK/unpack/stable/stable" install --publish-app "$WORK/unpack/stable"
+APP="$(readlink "$BIN_DIR/stable")"
+echo "  ✓ stable $VERSION → $APP (linked at $BIN_DIR/stable)"
+# Shared services may be used by old sessions, including sessions whose
+# executable belongs to an earlier generation. Never restart them on update.
+echo "  → existing sessions and background services keep their current runtime"
+echo "  → after finishing those sessions, restart services if needed: stable broker restart; stable proxy restart"
+if "$APP" install --refresh-installed >"$WORK/integration-refresh.log" 2>&1; then
   cat "$WORK/integration-refresh.log"
   echo "  ✓ refreshed previously installed host integrations"
 else
-  KEEP_BACKUP=1
   cat "$WORK/integration-refresh.log" >&2
   echo "  ⚠ an existing integration could not be refreshed — resolve the error, then run: stable install --refresh-installed"
 fi
 # Preserve the user's explicit default choice. Refresh changes only shims that
 # were enabled already; a fresh install keeps normal native commands unchanged.
-if "$APP_HOME/app/stable" default --refresh >"$WORK/default-refresh.log" 2>&1; then
+if "$APP" default --refresh >"$WORK/default-refresh.log" 2>&1; then
   cat "$WORK/default-refresh.log"
 else
-  KEEP_BACKUP=1
   cat "$WORK/default-refresh.log" >&2
   echo "  ⚠ default launchers could not be refreshed — resolve the error, then run: stable default on"
-fi
-if [ -n "$BACKUP" ]; then
-  # Query the renamed executable after the swap: this also catches old clients
-  # that entered immediately before replacement, even if argv[0] is just stable.
-  if ! "$WORK/unpack/stable/stable" install --old-app-idle "$BACKUP/app/stable"; then
-    KEEP_BACKUP=1
-  fi
-  if [ "$KEEP_BACKUP" = 0 ]; then
-    rm -rf "$BACKUP"
-  else
-    echo "  → previous app retained at $BACKUP/app until its services have stopped"
-  fi
 fi
 STABLE_APPLY
 # Keep the staged helper's interpreter and payload until its guarded child
 # finishes. Removing WORK on an outer-shell interrupt would break that child.
 trap 'echo "  → finishing the guarded app update before cleaning staging files" >&2' INT TERM
-if "$WORK/unpack/stable/stable" install --with-update-lock /bin/sh "$WORK/apply.sh"; then
+if "$WORK/unpack/stable/stable" install --with-live-update-lock /bin/sh "$WORK/apply.sh"; then
   :
 else
   CODE=$?
@@ -206,10 +147,11 @@ else
   exit "$CODE"
 fi
 trap - INT TERM
+APP="$(readlink "$BIN_DIR/stable")"
 
 # The installed app owns the reporting preference and payload. Wake its finite
 # sender only after the replacement lease is released; never wait for upload.
-"$APP_HOME/app/stable" analytics --flush >/dev/null 2>&1 || true
+"$APP" analytics --flush >/dev/null 2>&1 || true
 
 case ":$PATH:" in
   *":$BIN_DIR:"*) ;;
@@ -217,14 +159,14 @@ case ":$PATH:" in
 esac
 
 printf '\n  Checking your existing subscription…\n'
-if ! "$APP_HOME/app/stable" status --subscriptions; then
+if ! "$APP" status --subscriptions; then
   echo "  ⚠ subscription detection did not finish — retry: stable status --subscriptions"
 fi
 echo "  Run stable to check your current login again; stable codex login signs in if needed."
 
-printf '\n  Preparing private Graphify for the reviewer…\n'
-if ! "$APP_HOME/app/stable" reviewer setup --install; then
-  echo "  ⚠ Graphify needs setup — follow the messages above, then run: stable reviewer setup"
+printf '\n  Preparing Cross memory for the reviewer…\n'
+if ! "$APP" reviewer setup --install; then
+  echo "  ⚠ Cross memory needs setup — follow the messages above, then run: stable reviewer setup"
 fi
 
 # Report the existing login before optional gateway dependency setup, which can
@@ -248,7 +190,7 @@ echo "    stable login            optional: add a Conifer Gateway key for other 
 echo "    stable install claude-code   enable /model, /harness, and /reviewer in stable cc"
 echo "    stable doctor           one line per dependency"
 echo "    stable default          optional: make native terminal commands launch Stable"
-echo "    stable reviewer setup --status   inspect private Graphify"
+echo "    stable reviewer setup --status   inspect Cross memory"
 echo "    stable uninstall        remove Stable, preserving native CLIs and logins"
 echo "    stable cc | codex | pi  launch a harness on Stable's lanes"
 echo

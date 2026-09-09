@@ -45,14 +45,13 @@ curl -fsSL https://raw.githubusercontent.com/yinan4099/stable-release/main/insta
 ```
 
 The installer downloads the latest release, verifies its SHA-256, unpacks the
-app under `~/.stable/app` and links `~/.local/bin/stable`. The app carries its
+app under `~/.stable/releases/release.*/app` and links `~/.local/bin/stable`. The app carries its
 own interpreter; each harness you use still needs its native CLI. It never
-uses `sudo`. Upgrades stage the replacement before swapping the app, and
-retain the previous files when an owned service cannot be restarted.
-The curl installer preserves active work and refuses replacement while current
-Stable launches or reviews are active. `stable update` explicitly stops verified
-Stable work after staging and checking the release, then waits for installation.
-Run it from a separate terminal and restart host sessions afterward.
+uses `sudo`. Upgrades publish a new app directory without changing or removing
+previous runtimes. Curl and `stable update` both work alongside active sessions
+and reviews; new sessions use the update while existing sessions keep running.
+Installation does not restart shared services. Previous app directories remain
+until uninstall so late imports and hook paths stay valid.
 Upgrades refresh already installed Stable skills and extensions; they do not
 enable integrations for new hosts. Restart an open host session to load them.
 
@@ -144,7 +143,7 @@ model inference. The reviewer retains native files and shell checks; inherited
 MCPs/plugins are disabled only for its child process. The source checkout's `docs/reviewer.md` describes input, report and scope details.
 
 `stable default` optionally routes interactive native commands through Stable.
-Fresh installs leave this off. Open a new terminal after enabling it;
+Fresh installs leave this off. Run the printed activation command in the same terminal;
 `stable default off` reverses it, and `stable native HARNESS ...` runs the
 original native CLI. Utility commands and headless native protocols retain
 their original behavior.
@@ -159,10 +158,10 @@ to remove a manual exclusion. New models appear automatically.
 Every normal launch of an installed release requests a background update check;
 concurrent launches coalesce without waiting for the network. Long sessions check
 every 12 hours while Stable stays active. Automatic updates use the same verified
-installer and wait for active Stable sessions and reviews to finish.
-`stable update` downloads and verifies the release, stops owned Stable work with
-bounded escalation, and waits for installation. Unverified ownership refuses
-replacement. `stable update check` only checks, and
+installer and publish for new sessions without stopping active work.
+`stable update` downloads and verifies the release and waits for installation;
+it can run from an active session. Unverified installation ownership refuses
+publication. `stable update check` only checks, and
 `stable update status` shows local progress. Set `STABLE_AUTO_UPDATE=0` or
 `"auto_update": false` in `~/.stable/config.json` to disable automatic updates.
 Source checkouts and developer builds do not update automatically.
@@ -183,7 +182,7 @@ estimated API-equivalent value are separate from API-key usage and spend.
 Missing usage or price data stays unknown, and subscription estimates are never
 treated as an actual subscription bill.
 
-Manual update: run `stable update` from a separate terminal. `stable uninstall --dry-run`
+Manual update: run `stable update`. `stable uninstall --dry-run`
 previews removal; `stable uninstall` removes Stable and its owned integrations.
 Native CLIs and logins remain, and history is retained by default. Add
 `--purge-data` during uninstall to remove recorded Stable data. Active Stable
