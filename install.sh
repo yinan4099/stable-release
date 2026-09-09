@@ -222,9 +222,9 @@ if ! "$APP_HOME/app/stable" status --subscriptions; then
 fi
 echo "  Run stable to check your current login again; stable codex login signs in if needed."
 
-printf '\n  Preparing private reviewer tools…\n'
+printf '\n  Preparing private Graphify for the reviewer…\n'
 if ! "$APP_HOME/app/stable" reviewer setup --install; then
-  echo "  ⚠ some reviewer tools need setup — follow the messages above, then run: stable reviewer setup"
+  echo "  ⚠ Graphify needs setup — follow the messages above, then run: stable reviewer setup"
 fi
 
 # Report the existing login before optional gateway dependency setup, which can
@@ -248,7 +248,7 @@ echo "    stable login            optional: add a Conifer Gateway key for other 
 echo "    stable install claude-code   enable /model, /harness, and /reviewer in stable cc"
 echo "    stable doctor           one line per dependency"
 echo "    stable default          optional: make native terminal commands launch Stable"
-echo "    stable reviewer setup --status   inspect private reviewer tools"
+echo "    stable reviewer setup --status   inspect private Graphify"
 echo "    stable uninstall        remove Stable, preserving native CLIs and logins"
 echo "    stable cc | codex | pi  launch a harness on Stable's lanes"
 echo

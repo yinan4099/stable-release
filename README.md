@@ -83,57 +83,32 @@ show `codex-subscription` or `conifer-gateway`. Stable preserves the harness
 when changing models. Each CLI may perform its own first-use tool setup;
 Prime also needs its Python kernel runtime and `uv` for native bootstrap.
 
-The reviewer is off by default in every harness. Explicit session
-choices, including off, survive resumption and harness switching. `/reviewer astra` enables a separate
-native Codex reviewer using the machine's ChatGPT subscription;
-`/reviewer fable` selects native Claude Code using its own subscription.
-If that subscription or native harness is unavailable, the job tries the other
-native subscription once within its original deadline. Results identify the
-actual reviewer; saved preferences remain unchanged. There is no paid API or
-gateway reviewer fallback.
-Review supplements completed implementation, validation, and author self-review.
-Once enabled, automatic review runs in the background once per task in Stable launches of
-Claude Code, Codex, Pi, Prime, and Jcode. Standard review is a focused extra
-check using high effort with a five-minute execution ceiling. `/reviewer deep`
-requests max effort with a 60-minute ceiling, capped by the model's supported
-effort levels. These are safety ceilings, not target durations: the reviewer
-finishes when the useful checks are complete. Material findings appear in a
-bounded review box; automatic clean results stay quiet. Results remain on disk
-until acknowledged, and the author can keep working while a deep review runs.
-`/reviewer manual` keeps on-demand access, and `/reviewer off` disables future
-reviews. Use `stable reviewer cancel JOB` for an active job. In Codex, spell
-these commands `$reviewer astra` or `$reviewer off` (or the explicit `stable:` form).
-Jcode uses `/Reviewer` with a capital R to avoid its native `/review` collision.
-This native skill uses an author model turn; terminal reviewer controls are local.
-Jcode starts background reviews through native lifecycle observers and retrieves
-results through its native MCP; its hooks cannot push a completed box into an
-idle UI. The same service is available to other
-MCP clients with `stable reviewer mcp --host H --session S --cwd C`.
+The reviewer is off by default. `/reviewer astra` selects a separate native
+Codex reviewer; `/reviewer fable` selects Claude Code. Explicit choices survive
+resume and harness switching. In Codex, use `$stable:reviewer` or an unclaimed
+`$reviewer` alias; Jcode uses `/Reviewer` with a capital R.
 
-Fresh setup enables only Graphify for private code indexing under
-`~/.stable/reviewer`. Browser and hosted research tools require explicit
-enablement; existing installations retain their saved choices. The default
-`auto` profile exposes only the selected graph. Additional profiles select from
-the optional tools you enabled. None are added to the normal author harness or
-replace independently configured copies.
+After implementation, validation and self-review, the author calls
+`review_changes` once. Review runs at medium effort with a two-minute ceiling and
+returns a concise report in that same call. The author checks applicability,
+fixes valid issues, and validates before its final response. No background review,
+wait/ack loop, delayed continuation, deep mode or capability profiles are used.
+The caller owns cancellation. A missing native subscription may fall back to the
+other native reviewer once within the same deadline; results name the actual
+reviewer, and no gateway or paid API route is substituted.
 
-`stable reviewer setup --status` reports prerequisites and readiness. Graph
-packages require Node/npm and Python 3.10–3.13; Chrome is needed only for optional
-browser checks. Use `stable reviewer capability status` to inspect choices,
-`stable reviewer capability on NAME` to enable an optional tool, and
-`stable reviewer setup` to prepare enabled dependencies. No paid MCP fallback
-is configured. Public hosted tools have their operators' availability and free
-usage limits.
-The reviewer runs in the actual workspace with its native file, shell, network,
-and configured tools. Private Graphify code indexing and optional disposable
-checks use separate verified sandboxes; missing optional capabilities do not
-disable the reviewer's native tools. Explicit browser profiles can inspect
-existing apps and public sites with private browser state. Standard reviews
-reuse relevant cached graph queries and focused native tools; they do not build
-a fresh index or repeat an entire audit without a specific need. Deep mode can
-perform broader indexing, investigation and tests.
-Graph indexes, public npm lockfile dependencies, and schemas use bounded private
-caches; fresh review verdicts are never replaced by cached approvals.
+Graphify is the only extra MCP. It uses a private pinned
+`graphifyy[mcp,sql]==0.9.55` runtime with Python 3.10–3.13. Run
+`stable reviewer setup` to install it or `stable reviewer setup --status` to
+inspect readiness. Existing owned runtimes are reused. Queries build local
+code-only indexes lazily and validate content/version/lock freshness before reuse.
+Corrupt indexes are rebuilt; source changes and static-analysis gaps are explicit.
+No user MCP configuration or global Graphify hooks are changed.
+
+The author can call `graph_query` directly even while review is off, or use
+`stable reviewer graph --cwd PROJECT --query TEXT`. It needs no reviewer job or
+model inference. The reviewer retains native files and shell checks; inherited
+MCPs/plugins are disabled only for its child process. The source checkout's `docs/reviewer.md` describes input, report and scope details.
 
 `stable default` optionally routes interactive native commands through Stable.
 Fresh installs leave this off. Open a new terminal after enabling it;
