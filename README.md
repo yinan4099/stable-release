@@ -22,7 +22,11 @@ retired.
 Switches use the same Stable setup as direct launches, preserving the provider
 and model together. Prime's built-in model names cannot take over a Stable
 subscription or gateway selection. Fresh Claude sessions can switch before
-their transcript is created. Delivered Claude/Codex context is retained for
+their transcript is created. Leaving a Claude subscription model for another
+harness prefers an available Codex subscription's advertised default model
+before routing Claude through the gateway. The admitted substitution is
+announced; unusable defaults retain existing destination resolution. Ordinary
+model selection and same-model quota fallback are unchanged. Delivered Claude/Codex context is retained for
 later resumes and onward switches; a native clear discards it. If an older
 release did not save that imported context, Stable keeps the source session
 open and explains how to recover instead of silently losing it.
@@ -96,7 +100,12 @@ show `codex-subscription` or `conifer-gateway`. Stable preserves the harness
 when changing models. Each CLI may perform its own first-use tool setup;
 Prime also needs its Python kernel runtime and `uv` for native bootstrap.
 
-The reviewer is off by default. `/reviewer astra` selects a separate native
+The reviewer is active by default: Claude/Fable reviews Codex authors;
+Codex/Astra reviews Claude Code, Pi, Prime, Jcode and terminal authors.
+`stable reviewer off` disables future review outside Conifer projects. Paths
+under `~/Desktop/Conifer`, their linked worktrees and repositories with a
+ConiferKit GitHub remote require review; off refuses there. Settings are local
+and do not start reviews or probe accounts. `/reviewer astra` selects a separate native
 Codex reviewer; `/reviewer fable` selects Claude Code. Explicit choices survive
 resume and harness switching. In Codex, use `$stable:reviewer` or an unclaimed
 `$reviewer` alias; Jcode uses `/Reviewer` with a capital R.
@@ -115,7 +124,11 @@ clearing the conversation removes it.
 For code changes or an explicitly requested source review, the author completes
 implementation, validation and self-review, then calls
 `review_changes` once. Review runs at medium effort with a two-minute ceiling and
-returns a concise report in that same call. The author checks applicability,
+returns a two-sentence preview in a complete five-line box. Full findings and
+checks stay in the saved report, accessible with the preview’s
+`stable reviewer result ID --json` command. Read it before acting on findings or
+a limited/failed review. Codex controls whether the outer tool call is expanded;
+Stable does not force it to collapse. The author checks applicability,
 fixes valid issues, and validates before its final response. No background review,
 wait/ack loop, delayed continuation, deep mode or capability profiles are used.
 The caller owns cancellation. A missing native subscription may fall back to the
