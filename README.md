@@ -157,7 +157,10 @@ to inspect, `stable model retry ID` to recheck, and `stable model include ID`
 to remove a manual exclusion. New models appear automatically.
 
 Every normal launch of an installed release requests a background update check;
-concurrent launches coalesce without waiting for the network. Long sessions check
+concurrent launches share one check and a running worker notices within one second.
+Interactive launches allow up to five seconds to enter a ready update. A failed
+check or unfinished download lets the existing version start while the worker
+continues. Native update/install commands bypass Stable's update locks. Long sessions check
 every 12 hours while Stable stays active. Automatic updates use the same verified
 installer and publish for new sessions without stopping active work.
 `stable update` downloads and verifies the release and waits for installation;
@@ -175,6 +178,16 @@ file paths, credentials or account emails. Updates preserve the installation ID.
 disables reporting and clears pending uploads. `stable analytics on` enables it
 again. `STABLE_ANONYMOUS_USAGE=0` also disables reporting for that invocation.
 Uploads are bounded and run in the background; failures do not block inference.
+
+Account-linked setup reporting is separately optional and off by default.
+`stable product-events on` explicitly permits linking successful login, installed
+harnesses and completed Stable engine runs to your Conifer account, including
+measuring adoption across Stable and Parallax. It sends no prompts, responses,
+code, paths or anonymous installation ID. A completed run does not establish
+that you accepted its result. `stable product-events off` revokes permission;
+`stable analytics off`, `STABLE_PRODUCT_EVENTS=0`, Conifer's telemetry opt-out
+and offline mode also suppress this channel. Previously anonymous activity
+remains anonymous and is never backfilled into your account history.
 
 Stable's private dataroom section keeps these counters separate from Conifer
 billing and other product analytics. Active installations approximate users;
