@@ -163,6 +163,7 @@ if ! "$APP" status --subscriptions; then
   echo "  ⚠ subscription detection did not finish — retry: stable status --subscriptions"
 fi
 echo "  Run stable to check your current login again; stable codex login signs in if needed."
+echo "  Updates preserve saved gateway credentials and native Claude/Codex logins; no new login is required."
 
 printf '\n  Preparing Cross memory for the reviewer…\n'
 if ! "$APP" reviewer setup --install; then

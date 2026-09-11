@@ -77,6 +77,13 @@ use that subscription in every supported harness. If you are signed out, run
 API keys do not count as subscriptions. A desktop app must expose a native
 Codex ChatGPT login; being signed into a browser alone is insufficient.
 
+Updates preserve saved gateway credentials and native Claude/Codex logins.
+`stable login` reuses your saved key; `stable login --replace` changes it.
+Conifer owns the persistent credential store; without Conifer, Stable uses
+an owner-only `~/.stable/credentials.json` outside the versioned application.
+Stable's Claude startup skips Jcode's optional notification so missing or
+failing Jcode helpers cannot block that launch. Native settings remain intact.
+
 `stable login` optionally adds a Conifer Gateway key for other models
 ([get a key](https://conifer.build/console#/keys)). For Claude Code, run
 `stable install claude-code`, then `stable cc`. `stable doctor` checks the
